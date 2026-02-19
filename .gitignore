@@ -28,3 +28,5 @@ data/*.json
 Thumbs.db
 
 info.txt
+
+docs
