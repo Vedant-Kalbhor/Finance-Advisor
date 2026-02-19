@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from .api import auth
+from .db.session import create_tables
+
+# Create database tables
+create_tables()
 
 app = FastAPI(title="Generative Personal Finance Advisor")
 

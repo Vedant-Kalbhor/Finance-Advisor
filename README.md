@@ -13,7 +13,7 @@ An AI-powered system that analyzes financial data to provide personalized planni
 ## Tech Stack
 
 - **Frontend:** React, Tailwind CSS, Recharts
-- **Backend:** FastAPI, PostgreSQL
+- **Backend:** FastAPI,SQLite
 - **AI/ML:** Llama/Gemini, LangChain, FAISS
 - **Data:** Pandas, NumPy
 
@@ -28,4 +28,4 @@ An AI-powered system that analyzes financial data to provide personalized planni
 ### Frontend Setup
 1. Navigate to `/frontend`
 2. Install dependencies: `npm install`
-3. Run the development server: `npm start`
+3. Run the development server: `npm run dev`

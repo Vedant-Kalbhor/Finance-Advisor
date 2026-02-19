@@ -2,39 +2,50 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0f172a;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  body {
+    @apply bg-background text-slate-200 antialiased selection:bg-primary/30;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
 }
 
-body {
-  margin: 0;
-  display: flex;
-  min-width: 320px;
-  min-height: 100vh;
+@layer components {
+  .glass-card {
+    @apply bg-surface/50 backdrop-blur-xl border border-slate-800 rounded-3xl shadow-2xl;
+  }
+
+  .input-dark {
+    @apply w-full bg-slate-900/50 border border-slate-700 rounded-2xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-white placeholder:text-slate-500;
+  }
+
+  .btn-premium {
+    @apply relative overflow-hidden bg-primary text-slate-950 font-bold px-6 py-4 rounded-2xl transition-all hover:bg-white active:scale-95 shadow-[0_0_20px_rgba(56,189,248,0.3)] hover:shadow-primary/50 flex items-center justify-center gap-2;
+  }
+
+  .btn-ghost {
+    @apply px-4 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-400 hover:text-primary hover:bg-primary/5 transition-all;
+  }
+
+  .nav-item-active {
+    @apply flex items-center gap-3 px-4 py-3 rounded-2xl text-primary bg-primary/10 font-semibold border-r-2 border-primary rounded-r-none;
+  }
+
+  .neon-text {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent-indigo;
+  }
 }
 
-#root {
-  width: 100%;
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
-
-.glass-morphism {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+::-webkit-scrollbar-track {
+  @apply bg-background;
 }
-
-.gradient-text {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-indigo-400;
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-800 rounded-full hover:bg-slate-700;
 }
