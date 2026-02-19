@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Node
+node_modules/
+build/
+dist/
+.eslintcache
+
+# AI Models & Data
+*.bin
+*.pt
+*.pth
+data/*.csv
+data/*.json
+!data/.gitkeep
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
