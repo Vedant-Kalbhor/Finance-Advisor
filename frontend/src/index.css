@@ -4,38 +4,42 @@
 
 @layer base {
   body {
-    @apply bg-background text-slate-200 antialiased selection:bg-primary/30;
+    @apply bg-background text-slate-900 antialiased selection:bg-accent/20;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
 @layer components {
-  .glass-card {
-    @apply bg-surface/50 backdrop-blur-xl border border-slate-800 rounded-3xl shadow-2xl;
+  .premium-card {
+    @apply bg-white border border-slate-200 rounded-3xl shadow-premium hover:shadow-elevated transition-all duration-300;
   }
 
-  .input-dark {
-    @apply w-full bg-slate-900/50 border border-slate-700 rounded-2xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all text-white placeholder:text-slate-500;
+  .input-premium {
+    @apply w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all text-slate-900 placeholder:text-slate-400;
   }
 
-  .btn-premium {
-    @apply relative overflow-hidden bg-primary text-slate-950 font-bold px-6 py-4 rounded-2xl transition-all hover:bg-white active:scale-95 shadow-[0_0_20px_rgba(56,189,248,0.3)] hover:shadow-primary/50 flex items-center justify-center gap-2;
+  .btn-primary {
+    @apply bg-primary text-white font-bold px-6 py-4 rounded-2xl transition-all hover:bg-primary-hover active:scale-95 shadow-lg shadow-primary/10 flex items-center justify-center gap-2;
+  }
+
+  .btn-accent {
+    @apply bg-accent text-white font-bold px-6 py-4 rounded-2xl transition-all hover:bg-accent-dark active:scale-95 shadow-lg shadow-accent/20 flex items-center justify-center gap-2;
   }
 
   .btn-ghost {
-    @apply px-4 py-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all;
+    @apply px-4 py-2 text-slate-600 hover:text-primary hover:bg-slate-100 rounded-xl transition-all;
   }
 
   .nav-item {
-    @apply flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-400 hover:text-primary hover:bg-primary/5 transition-all;
+    @apply flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-500 hover:text-primary hover:bg-slate-50 transition-all;
   }
 
   .nav-item-active {
-    @apply flex items-center gap-3 px-4 py-3 rounded-2xl text-primary bg-primary/10 font-semibold border-r-2 border-primary rounded-r-none;
+    @apply flex items-center gap-3 px-4 py-3 rounded-2xl text-accent bg-accent/10 font-bold border-l-4 border-accent rounded-l-none;
   }
 
-  .neon-text {
-    @apply text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent-indigo;
+  .accent-text {
+    @apply text-accent font-bold;
   }
 }
 
@@ -47,5 +51,5 @@
   @apply bg-background;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-800 rounded-full hover:bg-slate-700;
+  @apply bg-slate-200 rounded-full hover:bg-slate-300;
 }

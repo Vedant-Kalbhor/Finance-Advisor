@@ -7,35 +7,36 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#020617', // Deepest Navy
-        surface: '#0f172a',    // Dark Slate
-        'surface-light': '#1e293b',
+        background: '#FFFFFF',
+        surface: '#F9FAFB',
         primary: {
-          DEFAULT: '#38bdf8', // Cyan/Sky Blue
-          dark: '#0284c7',
-          glow: 'rgba(56, 189, 248, 0.15)',
+          DEFAULT: '#000000',
+          hover: '#1F2937',
         },
         accent: {
-          success: '#10b981',
-          danger: '#ef4444',
-          warning: '#f59e0b',
-          indigo: '#6366f1',
+          DEFAULT: '#10B981', // Emerald Green
+          dark: '#059669',
+          light: '#D1FAE5',
         },
         slate: {
-          950: '#020617',
-          900: '#0f172a',
-          800: '#1e293b',
-          700: '#334155',
-          400: '#94a3b8',
-          200: '#e2e8f0',
+          50: '#F9FAFB',
+          100: '#F3F4F6',
+          200: '#E5E7EB',
+          300: '#D1D5DB',
+          400: '#9CA3AF',
+          500: '#6B7280',
+          600: '#4B5563',
+          700: '#374151',
+          800: '#1F2937',
+          900: '#111827',
         }
       },
       fontFamily: {
         sans: ['"Inter"', 'system-ui', 'sans-serif'],
       },
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'premium-gradient': 'linear-gradient(135deg, #0f172a 0%, #020617 100%)',
+      boxShadow: {
+        'premium': '0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+        'elevated': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
       }
     },
   },

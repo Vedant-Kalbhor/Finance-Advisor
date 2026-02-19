@@ -6,7 +6,7 @@ from .db.session import create_tables
 # Create database tables
 create_tables()
 
-app = FastAPI(title="Generative Personal Finance Advisor")
+app = FastAPI(title="Finance Advisor")
 
 # Enable CORS for frontend integration
 app.add_middleware(

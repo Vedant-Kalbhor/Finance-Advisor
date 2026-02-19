@@ -1,4 +1,4 @@
-# Generative Personal Finance Advisor
+# Finance Advisor
 
 An AI-powered system that analyzes financial data to provide personalized planning, explainable recommendations, and conversational guidance.
 
