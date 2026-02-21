@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Budget from './pages/Budget';
 
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = !!localStorage.getItem('token');
@@ -23,6 +24,14 @@ function App() {
             </PrivateRoute>
           }
         />
+        <Route
+          path="/budget"
+          element={
+            <PrivateRoute>
+              <Budget />
+            </PrivateRoute>
+          }
+        />
         <Route path="*" element={<Navigate to="/dashboard" />} />
       </Routes>
     </Router>
@@ -30,3 +39,4 @@ function App() {
 }
 
 export default App;
+
