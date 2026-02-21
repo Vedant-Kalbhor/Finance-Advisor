@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import {
     User, Wallet, Activity, Save, Loader2,
     LogOut, Briefcase, Calendar, TrendingUp,
     LayoutDashboard, PieChart, Target, Settings,
     ChevronRight, ArrowUpRight, ArrowDownRight,
-    Shield, CreditCard, DollarSign, Menu, Bell
+    Shield, CreditCard, DollarSign, Menu, Bell, MapPin
 } from 'lucide-react';
 
 const Dashboard = () => {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -67,14 +69,15 @@ const Dashboard = () => {
 
                 <nav className="flex-1 space-y-2">
                     {[
-                        { icon: LayoutDashboard, label: 'Overview', active: true },
-                        { icon: PieChart, label: 'Analytics' },
-                        { icon: Target, label: 'Goals' },
-                        { icon: Briefcase, label: 'Investments' },
-                        { icon: Settings, label: 'Preferences' },
+                        { icon: LayoutDashboard, label: 'Overview', active: true, path: '/dashboard' },
+                        { icon: PieChart, label: 'Budget', path: '/budget' },
+                        { icon: Target, label: 'Goals', path: '#' },
+                        { icon: Briefcase, label: 'Investments', path: '#' },
+                        { icon: Settings, label: 'Preferences', path: '#' },
                     ].map((item) => (
                         <button
                             key={item.label}
+                            onClick={() => item.path !== '#' && navigate(item.path)}
                             className={item.active ? 'nav-item-active w-full' : 'nav-item w-full'}
                         >
                             <item.icon className="w-5 h-5" />
@@ -169,6 +172,19 @@ const Dashboard = () => {
                                             placeholder="e.g. Product Manager"
                                         />
                                     </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Location</label>
+                                        <div className="relative">
+                                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                            <input
+                                                type="text"
+                                                value={profile?.location || ''}
+                                                onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                                                className="input-premium pl-12"
+                                                placeholder="e.g. Mumbai, Delhi"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </section>
 
@@ -228,8 +244,8 @@ const Dashboard = () => {
                                                     type="button"
                                                     onClick={() => setProfile({ ...profile, risk_profile: level })}
                                                     className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${profile?.risk_profile === level
-                                                            ? 'bg-white text-accent shadow-sm border border-slate-100'
-                                                            : 'text-slate-400 hover:text-slate-600'
+                                                        ? 'bg-white text-accent shadow-sm border border-slate-100'
+                                                        : 'text-slate-400 hover:text-slate-600'
                                                         }`}
                                                 >
                                                     {level.substring(0, 3)}

@@ -28,6 +28,7 @@ class ProfileBase(BaseModel):
     monthly_expenses: float = 0.0
     risk_profile: str = "Moderate"
     financial_goals: Dict = {}
+    location: Optional[str] = ""
 
 class ProfileCreate(ProfileBase):
     pass
