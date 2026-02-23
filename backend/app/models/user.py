@@ -23,5 +23,6 @@ class Profile(Base):
     monthly_expenses = Column(Float, default=0.0)
     risk_profile = Column(String, default="Moderate") # Conservative, Moderate, Aggressive
     financial_goals = Column(JSON, default={}) # List of goals
+    location = Column(String, default="") # User's city/region for cost-of-living context
     
     user = relationship("User", back_populates="profile")
