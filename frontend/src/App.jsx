@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Budget from './pages/Budget';
+import Investments from './pages/Investments';
 
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = !!localStorage.getItem('token');
@@ -29,6 +30,14 @@ function App() {
           element={
             <PrivateRoute>
               <Budget />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/investments"
+          element={
+            <PrivateRoute>
+              <Investments />
             </PrivateRoute>
           }
         />

@@ -22,6 +22,7 @@ import {
     LayoutDashboard, Target, Briefcase, Settings,
     Shield, LogOut, RefreshCw, MapPin
 } from 'lucide-react';
+import Sidebar from '../components/Sidebar';
 
 const Budget = () => {
     // ─── State Management ───────────────────────────────────
@@ -170,56 +171,7 @@ const Budget = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 flex">
-
-            {/* ─── Sidebar (same as Dashboard) ─────────────────── */}
-            <aside className="w-72 bg-white border-r border-slate-200 hidden lg:flex flex-col p-8 fixed h-full z-10">
-                <div className="flex items-center gap-3 mb-12">
-                    <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-lg shadow-accent/20">
-                        <Shield className="w-6 h-6 text-white" />
-                    </div>
-                    <span className="font-black text-2xl tracking-tighter text-slate-900">
-                        Finance <span className="text-accent">Advisor</span>
-                    </span>
-                </div>
-
-                <nav className="flex-1 space-y-2">
-                    {[
-                        { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
-                        { icon: PieChart, label: 'Budget', path: '/budget', active: true },
-                        { icon: Target, label: 'Goals', path: '#' },
-                        { icon: Briefcase, label: 'Investments', path: '#' },
-                        { icon: Settings, label: 'Preferences', path: '#' },
-                    ].map((item) => (
-                        <button
-                            key={item.label}
-                            onClick={() => item.path !== '#' && navigate(item.path)}
-                            className={item.active ? 'nav-item-active w-full' : 'nav-item w-full'}
-                        >
-                            <item.icon className="w-5 h-5" />
-                            <span className="font-bold text-sm">{item.label}</span>
-                        </button>
-                    ))}
-                </nav>
-
-                {/* Global status indicator */}
-                <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 mb-6">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="w-2 h-2 rounded-full bg-accent" />
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Global Status</span>
-                    </div>
-                    <p className="text-xs text-slate-600 font-bold">
-                        Saving: <span className="text-accent">{savingsRate}%</span>
-                    </p>
-                </div>
-
-                <button
-                    onClick={() => { authService.logout(); window.location.href = '/login'; }}
-                    className="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all font-bold text-sm mt-auto"
-                >
-                    <LogOut className="w-5 h-5" />
-                    Logout
-                </button>
-            </aside>
+            <Sidebar savingsRate={savingsRate} />
 
             {/* ─── Main Content ────────────────────────────────── */}
             <main className="flex-1 lg:ml-72 p-6 lg:p-12">
@@ -308,8 +260,8 @@ const Budget = () => {
                                                 type="button"
                                                 onClick={() => setFormData({ ...formData, risk_profile: level })}
                                                 className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${formData.risk_profile === level
-                                                        ? 'bg-white text-accent shadow-sm border border-slate-100'
-                                                        : 'text-slate-400 hover:text-slate-600'
+                                                    ? 'bg-white text-accent shadow-sm border border-slate-100'
+                                                    : 'text-slate-400 hover:text-slate-600'
                                                     }`}
                                             >
                                                 {level.substring(0, 3)}
@@ -409,9 +361,9 @@ const Budget = () => {
                                         <div className="mt-4 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                             <div
                                                 className={`h-full rounded-full transition-all duration-700 ${card.label === 'Needs' ? 'bg-blue-500' :
-                                                        card.label === 'Wants' ? 'bg-purple-500' :
-                                                            card.label === 'Savings' ? 'bg-emerald-500' :
-                                                                'bg-amber-500'
+                                                    card.label === 'Wants' ? 'bg-purple-500' :
+                                                        card.label === 'Savings' ? 'bg-emerald-500' :
+                                                            'bg-amber-500'
                                                     }`}
                                                 style={{ width: `${card.pct}%` }}
                                             />

@@ -1,32 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
+import { investmentService } from '../services/investmentService';
 import {
     User, Wallet, Activity, Save, Loader2,
-    LogOut, Briefcase, Calendar, TrendingUp,
-    LayoutDashboard, PieChart, Target, Settings,
-    ChevronRight, ArrowUpRight, ArrowDownRight,
-    Shield, CreditCard, DollarSign, Menu, Bell, MapPin
+    TrendingUp, ChevronRight, ArrowUpRight,
+    DollarSign, Bell, MapPin, Briefcase
 } from 'lucide-react';
+import Sidebar from '../components/Sidebar';
 
 const Dashboard = () => {
     const [profile, setProfile] = useState(null);
+    const [investments, setInvestments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchProfile = async () => {
+        const fetchAllData = async () => {
             try {
-                const data = await authService.getProfile();
-                setProfile(data);
+                const [profileData, investmentData] = await Promise.all([
+                    authService.getProfile(),
+                    investmentService.getInvestments()
+                ]);
+                setProfile(profileData);
+                setInvestments(investmentData);
             } catch (err) {
-                console.error('Failed to fetch profile');
+                console.error('Failed to fetch data');
             } finally {
                 setLoading(false);
             }
         };
-        fetchProfile();
+        fetchAllData();
     }, []);
 
     const handleUpdate = async (e) => {
@@ -58,50 +63,7 @@ const Dashboard = () => {
 
     return (
         <div className="min-h-screen bg-slate-50 flex">
-            {/* Sidebar */}
-            <aside className="w-72 bg-white border-r border-slate-200 hidden lg:flex flex-col p-8 fixed h-full z-10">
-                <div className="flex items-center gap-3 mb-12">
-                    <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-lg shadow-accent/20">
-                        <Shield className="w-6 h-6 text-white" />
-                    </div>
-                    <span className="font-black text-2xl tracking-tighter text-slate-900">Finance <span className="text-accent">Advisor</span></span>
-                </div>
-
-                <nav className="flex-1 space-y-2">
-                    {[
-                        { icon: LayoutDashboard, label: 'Overview', active: true, path: '/dashboard' },
-                        { icon: PieChart, label: 'Budget', path: '/budget' },
-                        { icon: Target, label: 'Goals', path: '#' },
-                        { icon: Briefcase, label: 'Investments', path: '#' },
-                        { icon: Settings, label: 'Preferences', path: '#' },
-                    ].map((item) => (
-                        <button
-                            key={item.label}
-                            onClick={() => item.path !== '#' && navigate(item.path)}
-                            className={item.active ? 'nav-item-active w-full' : 'nav-item w-full'}
-                        >
-                            <item.icon className="w-5 h-5" />
-                            <span className="font-bold text-sm">{item.label}</span>
-                        </button>
-                    ))}
-                </nav>
-
-                <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200 mb-6">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="w-2 h-2 rounded-full bg-accent" />
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Global Status</span>
-                    </div>
-                    <p className="text-xs text-slate-600 font-bold">Saving: <span className="text-accent">{savingsRate}%</span></p>
-                </div>
-
-                <button
-                    onClick={() => { authService.logout(); window.location.href = '/login'; }}
-                    className="flex items-center gap-3 px-4 py-3 text-red-500 hover:bg-red-50 rounded-2xl transition-all font-bold text-sm mt-auto"
-                >
-                    <LogOut className="w-5 h-5" />
-                    Logout
-                </button>
-            </aside>
+            <Sidebar savingsRate={savingsRate} />
 
             {/* Main Content */}
             <main className="flex-1 lg:ml-72 p-6 lg:p-12">
@@ -123,22 +85,23 @@ const Dashboard = () => {
                     </header>
 
                     {/* Core Metrics */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                         {[
                             { label: 'Income', val: `₹${profile?.monthly_income || 0}`, icon: DollarSign, color: 'text-accent', bg: 'bg-accent/10' },
                             { label: 'Expenses', val: `₹${profile?.monthly_expenses || 0}`, icon: Activity, color: 'text-red-600', bg: 'bg-red-50' },
+                            { label: 'Portfolio', val: `₹${investments.reduce((sum, inv) => sum + inv.amount, 0).toLocaleString()}`, icon: Briefcase, color: 'text-blue-600', bg: 'bg-blue-50' },
                             { label: 'Efficiency', val: `${savingsRate}%`, icon: TrendingUp, color: 'text-slate-900', bg: 'bg-slate-100' },
                         ].map((stat, i) => (
-                            <div key={i} className="premium-card p-8 bg-white flex flex-col justify-between h-44">
+                            <div key={i} className="premium-card p-6 bg-white flex flex-col justify-between h-40">
                                 <div className="flex justify-between items-start">
-                                    <div className={`p-3 rounded-2xl ${stat.bg} ${stat.color}`}>
-                                        <stat.icon className="w-6 h-6" />
+                                    <div className={`p-2.5 rounded-xl ${stat.bg} ${stat.color}`}>
+                                        <stat.icon className="w-5 h-5" />
                                     </div>
-                                    <ChevronRight className="w-5 h-5 text-slate-300" />
+                                    <ChevronRight className="w-4 h-4 text-slate-300" />
                                 </div>
                                 <div>
-                                    <div className="text-3xl font-black text-slate-900">{stat.val}</div>
-                                    <span className="text-slate-400 font-bold text-xs uppercase tracking-widest">{stat.label}</span>
+                                    <div className="text-2xl font-black text-slate-900 leading-none mb-1">{stat.val}</div>
+                                    <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">{stat.label}</span>
                                 </div>
                             </div>
                         ))}
