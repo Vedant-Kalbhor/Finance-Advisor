@@ -38,11 +38,33 @@ def _run_migrations():
     if "profiles" in inspector.get_table_names():
         existing_columns = [col["name"] for col in inspector.get_columns("profiles")]
 
-        # Add 'location' column if it's missing
-        if "location" not in existing_columns:
-            with engine.begin() as conn:
-                conn.execute(text("ALTER TABLE profiles ADD COLUMN location VARCHAR DEFAULT ''"))
-                print("[Migration] Added 'location' column to profiles table.")
+        # Add new columns if missing
+        new_cols = {
+            "location": "VARCHAR DEFAULT ''",
+            "tax_regime": "VARCHAR DEFAULT 'New'",
+            "deductions_80c": "FLOAT DEFAULT 0.0",
+            "deductions_80d": "FLOAT DEFAULT 0.0",
+            "other_deductions": "FLOAT DEFAULT 0.0"
+        }
+        
+        for col, col_type in new_cols.items():
+            if col not in existing_columns:
+                with engine.begin() as conn:
+                    conn.execute(text(f"ALTER TABLE profiles ADD COLUMN {col} {col_type}"))
+                    print(f"[Migration] Added '{col}' column to profiles table.")
+
+    # Migration for investments table
+    if "investments" in inspector.get_table_names():
+        existing_invest_cols = [col["name"] for col in inspector.get_columns("investments")]
+        invest_cols = {
+            "goal_id": "INTEGER REFERENCES goals(id)",
+            "is_tax_saving": "BOOLEAN DEFAULT FALSE"
+        }
+        for col, col_type in invest_cols.items():
+            if col not in existing_invest_cols:
+                with engine.begin() as conn:
+                    conn.execute(text(f"ALTER TABLE investments ADD COLUMN {col} {col_type}"))
+                    print(f"[Migration] Added '{col}' column to investments table.")
 
 def create_tables():
     # This automatically creates the .db file and all tables if they don't exist

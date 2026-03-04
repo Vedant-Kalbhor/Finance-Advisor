@@ -14,8 +14,8 @@ const Sidebar = ({ savingsRate }) => {
         { icon: LayoutDashboard, label: 'Overview', path: '/dashboard' },
         { icon: PieChart, label: 'Budget', path: '/budget' },
         { icon: Briefcase, label: 'Investments', path: '/investments' },
-        { icon: Target, label: 'Goals', path: '#' },
-        { icon: Settings, label: 'Preferences', path: '#' },
+        { icon: Target, label: 'Strategy', path: '/goals' },
+        { icon: Shield, label: 'Tax Optimizer', path: '/tax' },
     ];
 
     return (

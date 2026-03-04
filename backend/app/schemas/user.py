@@ -29,6 +29,10 @@ class ProfileBase(BaseModel):
     risk_profile: str = "Moderate"
     financial_goals: Dict = {}
     location: Optional[str] = ""
+    tax_regime: str = "New"
+    deductions_80c: float = 0.0
+    deductions_80d: float = 0.0
+    other_deductions: float = 0.0
 
 class ProfileCreate(ProfileBase):
     pass
@@ -43,10 +47,38 @@ class ProfileResponse(ProfileBase):
     class Config:
         from_attributes = True
 
+class GoalBase(BaseModel):
+    name: str
+    target_amount: float
+    target_date: str
+    current_amount: float = 0.0
+    priority: str = "Medium"
+    category: Optional[str] = None
+
+class GoalCreate(GoalBase):
+    pass
+
+class GoalUpdate(BaseModel):
+    name: Optional[str] = None
+    target_amount: Optional[float] = None
+    target_date: Optional[str] = None
+    current_amount: Optional[float] = None
+    priority: Optional[str] = None
+    category: Optional[str] = None
+
+class GoalResponse(GoalBase):
+    id: int
+    user_id: int
+
+    class Config:
+        from_attributes = True
+
 class InvestmentBase(BaseModel):
     name: str
     type: str
     amount: float
+    goal_id: Optional[int] = None
+    is_tax_saving: bool = False
     start_date: Optional[str] = None
     frequency: str = "Monthly"
     expected_return: float = 12.0
@@ -58,6 +90,8 @@ class InvestmentUpdate(BaseModel):
     name: Optional[str] = None
     type: Optional[str] = None
     amount: Optional[float] = None
+    goal_id: Optional[int] = None
+    is_tax_saving: Optional[bool] = None
     frequency: Optional[str] = None
     expected_return: Optional[float] = None
 

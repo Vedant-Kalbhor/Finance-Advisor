@@ -5,6 +5,8 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Budget from './pages/Budget';
 import Investments from './pages/Investments';
+import Goals from './pages/Goals';
+import TaxPlanner from './pages/TaxPlanner';
 
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = !!localStorage.getItem('token');
@@ -38,6 +40,22 @@ function App() {
           element={
             <PrivateRoute>
               <Investments />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/goals"
+          element={
+            <PrivateRoute>
+              <Goals />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/tax"
+          element={
+            <PrivateRoute>
+              <TaxPlanner />
             </PrivateRoute>
           }
         />

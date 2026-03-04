@@ -151,6 +151,42 @@ const Dashboard = () => {
                                 </div>
                             </section>
 
+                            <section className="premium-card p-10 bg-white">
+                                <div className="flex items-center gap-4 mb-8">
+                                    <h3 className="text-xl font-black text-slate-900 leading-none">Tax Profile</h3>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-4">
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Tax Regime</label>
+                                        <div className="flex bg-slate-50 p-1 rounded-2xl border border-slate-100">
+                                            {['New', 'Old'].map((regime) => (
+                                                <button
+                                                    key={regime}
+                                                    type="button"
+                                                    onClick={() => setProfile({ ...profile, tax_regime: regime })}
+                                                    className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${profile?.tax_regime === regime
+                                                        ? 'bg-white text-accent shadow-sm border border-slate-100'
+                                                        : 'text-slate-400 hover:text-slate-600'
+                                                        }`}
+                                                >
+                                                    {regime}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">80C (Yearly)</label>
+                                        <input
+                                            type="number"
+                                            value={profile?.deductions_80c || ''}
+                                            onChange={(e) => setProfile({ ...profile, deductions_80c: e.target.value })}
+                                            className="input-premium"
+                                            placeholder="e.g. 150000"
+                                        />
+                                    </div>
+                                </div>
+                            </section>
+
                             <div className="bg-slate-900 p-10 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl shadow-primary/20 group">
                                 <div>
                                     <h3 className="text-2xl font-black text-white mb-2 italic">Ready to optimize?</h3>

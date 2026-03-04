@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { investmentService } from '../services/investmentService';
+import { advisoryService } from '../services/advisoryService';
 import { authService } from '../services/authService';
 import {
     Plus, TrendingUp, Wallet, PieChart as PieChartIcon,
@@ -16,6 +17,7 @@ const COLORS = ['#10B981', '#111827', '#6B7280', '#D1FAE5', '#374151'];
 
 const Investments = () => {
     const [investments, setInvestments] = useState([]);
+    const [goals, setGoals] = useState([]);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
@@ -29,6 +31,8 @@ const Investments = () => {
         name: '',
         type: 'Stock',
         amount: '',
+        goal_id: null,
+        is_tax_saving: false,
         frequency: 'Monthly',
         expected_return: 12
     });
@@ -39,10 +43,11 @@ const Investments = () => {
 
     const fetchData = async () => {
         try {
-            const [invData, brokerData, profileData] = await Promise.all([
+            const [invData, brokerData, profileData, goalsData] = await Promise.all([
                 investmentService.getInvestments(),
                 investmentService.getBrokerConfig(),
-                authService.getProfile()
+                authService.getProfile(),
+                advisoryService.getGoals()
             ]);
             setInvestments(invData);
             setBrokerConfig(brokerData);
@@ -51,6 +56,7 @@ const Investments = () => {
                 api_secret: brokerData.api_secret || ''
             });
             setProfile(profileData);
+            setGoals(goalsData);
         } catch (err) {
             console.error('Error fetching data:', err);
         } finally {
@@ -63,7 +69,15 @@ const Investments = () => {
         try {
             await investmentService.createInvestment(newInvestment);
             setShowModal(false);
-            setNewInvestment({ name: '', type: 'Stock', amount: '', frequency: 'Monthly', expected_return: 12 });
+            setNewInvestment({
+                name: '',
+                type: 'Stock',
+                amount: '',
+                goal_id: null,
+                is_tax_saving: false,
+                frequency: 'Monthly',
+                expected_return: 12
+            });
             fetchData();
         } catch (err) {
             alert('Failed to add investment');
@@ -237,7 +251,17 @@ const Investments = () => {
                                             </div>
                                             <div>
                                                 <div className="font-bold text-slate-900 leading-none mb-1">{inv.name}</div>
-                                                <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{inv.type} • {inv.frequency}</div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{inv.type}</span>
+                                                    {inv.goal_id && (
+                                                        <span className="bg-blue-50 text-blue-600 text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter border border-blue-100 italic">
+                                                            {goals.find(g => g.id === inv.goal_id)?.name}
+                                                        </span>
+                                                    )}
+                                                    {inv.is_tax_saving && (
+                                                        <span className="bg-accent/10 text-accent text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter border border-accent/20">80C</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-6">
@@ -310,6 +334,36 @@ const Investments = () => {
                                                 value={newInvestment.expected_return}
                                                 onChange={(e) => setNewInvestment({ ...newInvestment, expected_return: e.target.value })}
                                             />
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Link to Strategy Goal</label>
+                                            <select
+                                                className="input-premium"
+                                                value={newInvestment.goal_id || ''}
+                                                onChange={(e) => setNewInvestment({ ...newInvestment, goal_id: e.target.value ? Number(e.target.value) : null })}
+                                            >
+                                                <option value="">No specific goal</option>
+                                                {goals.map(goal => (
+                                                    <option key={goal.id} value={goal.id}>{goal.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                            <div>
+                                                <div className="text-xs font-black text-slate-900 uppercase tracking-tight">Tax Saving (80C)</div>
+                                                <div className="text-[10px] font-medium text-slate-400">Qualifies for deduction</div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setNewInvestment({ ...newInvestment, is_tax_saving: !newInvestment.is_tax_saving })}
+                                                className={`w-12 h-6 rounded-full transition-all relative ${newInvestment.is_tax_saving ? 'bg-accent' : 'bg-slate-300'}`}
+                                            >
+                                                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${newInvestment.is_tax_saving ? 'right-1' : 'left-1'}`} />
+                                            </button>
                                         </div>
                                     </div>
 
