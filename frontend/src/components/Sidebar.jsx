@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/authService';
 import {
     LayoutDashboard, PieChart, Target, Briefcase,
-    Settings, Shield, LogOut
+    Settings, Shield, LogOut, MessageCircle
 } from 'lucide-react';
 
 const Sidebar = ({ savingsRate }) => {
@@ -16,6 +16,7 @@ const Sidebar = ({ savingsRate }) => {
         { icon: Briefcase, label: 'Investments', path: '/investments' },
         { icon: Target, label: 'Strategy', path: '/goals' },
         { icon: Shield, label: 'Tax Optimizer', path: '/tax' },
+        { icon: MessageCircle, label: 'Chat Advisor', path: '/chatbot' },
     ];
 
     return (

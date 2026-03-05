@@ -5,7 +5,7 @@ import { investmentService } from '../services/investmentService';
 import {
     User, Wallet, Activity, Save, Loader2,
     TrendingUp, ChevronRight, ArrowUpRight,
-    DollarSign, Bell, MapPin, Briefcase
+    DollarSign, Bell, MapPin, Briefcase, MessageCircle
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
 
@@ -257,6 +257,18 @@ const Dashboard = () => {
                         </div>
                     </form>
                 </div>
+
+                {/* Floating Chat Button */}
+                <button
+                    onClick={() => navigate('/chatbot')}
+                    className="fixed bottom-8 right-8 w-16 h-16 bg-accent rounded-full flex items-center justify-center shadow-2xl shadow-accent/30 hover:scale-110 active:scale-95 transition-all z-50 group"
+                    title="Chat with AI Advisor"
+                    id="chatbot-fab"
+                >
+                    <MessageCircle className="w-7 h-7 text-white group-hover:scale-110 transition-transform" />
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-ping opacity-75" />
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full" />
+                </button>
             </main>
         </div>
     );

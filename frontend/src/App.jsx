@@ -7,6 +7,7 @@ import Budget from './pages/Budget';
 import Investments from './pages/Investments';
 import Goals from './pages/Goals';
 import TaxPlanner from './pages/TaxPlanner';
+import Chatbot from './pages/Chatbot';
 
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = !!localStorage.getItem('token');
@@ -56,6 +57,14 @@ function App() {
           element={
             <PrivateRoute>
               <TaxPlanner />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/chatbot"
+          element={
+            <PrivateRoute>
+              <Chatbot />
             </PrivateRoute>
           }
         />

@@ -5,12 +5,13 @@ import { authService } from '../services/authService';
 import {
     Plus, TrendingUp, Wallet, PieChart as PieChartIcon,
     Trash2, ExternalLink, Loader2, Edit2, ShieldCheck,
-    ChevronRight, DollarSign, BarChart3
+    ChevronRight, DollarSign, BarChart3, Sparkles
 } from 'lucide-react';
 import {
     PieChart, Pie, Cell, ResponsiveContainer,
     Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid
 } from 'recharts';
+import ReactMarkdown from 'react-markdown';
 import Sidebar from '../components/Sidebar';
 
 const COLORS = ['#10B981', '#111827', '#6B7280', '#D1FAE5', '#374151'];
@@ -36,6 +37,13 @@ const Investments = () => {
         frequency: 'Monthly',
         expected_return: 12
     });
+
+    // AI Recommendations State
+    const [showAIPanel, setShowAIPanel] = useState(false);
+    const [aiRiskLevel, setAiRiskLevel] = useState('Moderate');
+    const [aiInvestmentType, setAiInvestmentType] = useState('Stock');
+    const [aiRecommendations, setAiRecommendations] = useState('');
+    const [isAILoading, setIsAILoading] = useState(false);
 
     useEffect(() => {
         fetchData();
@@ -110,6 +118,20 @@ const Investments = () => {
         }
     };
 
+    const handleGetAIRecommendations = async () => {
+        setIsAILoading(true);
+        setAiRecommendations('');
+        try {
+            const recommendations = await investmentService.getAIRecommendations(aiRiskLevel, aiInvestmentType);
+            setAiRecommendations(recommendations);
+        } catch (err) {
+            setAiRecommendations('Failed to get recommendations. Please try again later.');
+            console.error('AI error:', err);
+        } finally {
+            setIsAILoading(false);
+        }
+    };
+
     const totalInvested = investments.reduce((sum, inv) => sum + inv.amount, 0);
 
     const chartData = investments.reduce((acc, inv) => {
@@ -143,13 +165,22 @@ const Investments = () => {
                             <h1 className="text-4xl font-black text-slate-900 leading-tight">Investment Hub</h1>
                             <p className="text-slate-500 font-medium">Growth tracking & portfolio orchestration.</p>
                         </div>
-                        <button
-                            onClick={() => setShowModal(true)}
-                            className="btn-accent px-6 py-3 flex items-center gap-2"
-                        >
-                            <Plus className="w-5 h-5" />
-                            Add Investment
-                        </button>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => setShowAIPanel(!showAIPanel)}
+                                className={`px-6 py-3 flex items-center gap-2 rounded-2xl font-bold transition-all shadow-lg ${showAIPanel ? 'bg-slate-900 text-white shadow-slate-900/20' : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-emerald-500/20 hover:scale-105'}`}
+                            >
+                                <Sparkles className="w-5 h-5" />
+                                AI Suggestions
+                            </button>
+                            <button
+                                onClick={() => setShowModal(true)}
+                                className="btn-accent px-6 py-3 flex items-center gap-2"
+                            >
+                                <Plus className="w-5 h-5" />
+                                Add Investment
+                            </button>
+                        </div>
                     </header>
 
                     {/* Global Stats */}
@@ -285,6 +316,102 @@ const Investments = () => {
                             </div>
                         </section>
                     </div>
+
+                    {/* AI Recommendations Panel */}
+                    {showAIPanel && (
+                        <div className="premium-card-ai p-8 animate-in slide-in-from-top-4 duration-300">
+                            <div className="flex flex-col md:flex-row gap-8">
+                                {/* Left Side: Configuration */}
+                                <div className="w-full md:w-1/3 border-b md:border-b-0 md:border-r border-slate-800 pb-8 md:pb-0 md:pr-8">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="p-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl shadow-lg shadow-emerald-500/20">
+                                            <Sparkles className="w-5 h-5 text-white" />
+                                        </div>
+                                        <h3 className="text-xl font-black text-white">Gemini Advisor</h3>
+                                    </div>
+
+                                    <p className="text-slate-400 text-sm mb-6">
+                                        Get real-time market suggestions tailored to your existing portfolio and goals.
+                                    </p>
+
+                                    <div className="space-y-6">
+                                        <div>
+                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest block mb-3">Risk Tolerance</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {['Conservative', 'Moderate', 'Aggressive'].map(risk => (
+                                                    <button
+                                                        key={risk}
+                                                        onClick={() => setAiRiskLevel(risk)}
+                                                        className={`pill-btn ${aiRiskLevel === risk ? 'pill-btn-active' : 'pill-btn-inactive bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'}`}
+                                                    >
+                                                        {risk}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-xs font-black text-slate-500 uppercase tracking-widest block mb-3">Asset Classification</label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {['Stock', 'Mutual Fund', 'Commodity', 'Gold', 'FD'].map(type => (
+                                                    <button
+                                                        key={type}
+                                                        onClick={() => setAiInvestmentType(type)}
+                                                        className={`pill-btn ${aiInvestmentType === type ? 'pill-btn-active' : 'pill-btn-inactive bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'}`}
+                                                    >
+                                                        {type}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={handleGetAIRecommendations}
+                                            disabled={isAILoading}
+                                            className="w-full py-4 rounded-xl font-bold bg-white text-slate-900 hover:bg-slate-100 transition-colors shadow-lg disabled:opacity-50 flex items-center justify-center gap-2 mt-4"
+                                        >
+                                            {isAILoading ? (
+                                                <>
+                                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                                    Analyzing Markets...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Sparkles className="w-5 h-5" />
+                                                    Generate Strategy
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Right Side: Results */}
+                                <div className="w-full md:w-2/3">
+                                    {isAILoading ? (
+                                        <div className="h-full flex flex-col items-center justify-center py-12 space-y-4">
+                                            <div className="relative">
+                                                <div className="w-16 h-16 border-4 border-slate-800 rounded-full"></div>
+                                                <div className="w-16 h-16 border-4 border-accent rounded-full absolute top-0 left-0 border-t-transparent animate-spin"></div>
+                                                <Sparkles className="w-6 h-6 text-accent absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                                            </div>
+                                            <div className="text-slate-400 font-medium">Gemini is searching current market data...</div>
+                                        </div>
+                                    ) : aiRecommendations ? (
+                                        <div className="prose-ai max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
+                                            <ReactMarkdown>{aiRecommendations}</ReactMarkdown>
+                                        </div>
+                                    ) : (
+                                        <div className="h-full flex flex-col items-center justify-center py-12 text-slate-500">
+                                            <Sparkles className="w-12 h-12 mb-4 opacity-50" />
+                                            <p className="font-medium text-center max-w-sm">
+                                                Select your parameters and generate a strategy to see AI-powered investment recommendations backed by real market data.
+                                            </p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Modal */}
                     {showModal && (

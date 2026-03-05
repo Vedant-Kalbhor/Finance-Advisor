@@ -1,10 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
+from pydantic import BaseModel
 from ..db.session import get_db
-from ..models.user import User, Investment, BrokerConfig
+from ..models.user import User, Investment, BrokerConfig, Profile, Goal
 from ..schemas.user import InvestmentCreate, InvestmentUpdate, InvestmentResponse, BrokerBase, BrokerUpdate, BrokerResponse
 from .auth import get_current_user
+from ..ai.chatbot import generate_investment_recommendations
 
 router = APIRouter()
 
@@ -105,3 +107,72 @@ def update_broker_config(
     db.commit()
     db.refresh(config)
     return config
+
+
+# --- AI Investment Recommendations ---
+
+class RecommendationRequest(BaseModel):
+    risk_level: str
+    investment_type: str
+
+
+class RecommendationResponse(BaseModel):
+    recommendations: str
+
+
+@router.post("/ai-recommendations", response_model=RecommendationResponse)
+async def get_ai_recommendations(
+    request: RecommendationRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Get AI-powered investment recommendations based on user's risk level,
+    preferred investment type, and their existing portfolio context.
+    """
+    profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
+    investments = db.query(Investment).filter(Investment.user_id == current_user.id).all()
+    goals = db.query(Goal).filter(Goal.user_id == current_user.id).all()
+
+    user_context = {
+        "profile": {
+            "full_name": current_user.full_name,
+            "age": profile.age if profile else None,
+            "occupation": profile.occupation if profile else None,
+            "monthly_income": profile.monthly_income if profile else 0,
+            "monthly_expenses": profile.monthly_expenses if profile else 0,
+            "risk_profile": profile.risk_profile if profile else "Moderate",
+            "location": profile.location if profile else "",
+        },
+        "investments": [
+            {
+                "name": inv.name,
+                "type": inv.type,
+                "amount": inv.amount,
+                "frequency": inv.frequency,
+                "expected_return": inv.expected_return,
+                "is_tax_saving": inv.is_tax_saving,
+            }
+            for inv in investments
+        ],
+        "goals": [
+            {
+                "name": goal.name,
+                "target_amount": goal.target_amount,
+                "current_amount": goal.current_amount,
+                "target_date": goal.target_date,
+                "priority": goal.priority,
+                "category": goal.category,
+            }
+            for goal in goals
+        ],
+    }
+
+    recommendations = await generate_investment_recommendations(
+        risk_level=request.risk_level,
+        investment_type=request.investment_type,
+        user_context=user_context,
+    )
+
+    return RecommendationResponse(recommendations=recommendations)
+
