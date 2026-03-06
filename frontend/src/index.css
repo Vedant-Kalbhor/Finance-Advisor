@@ -41,6 +41,53 @@
   .accent-text {
     @apply text-accent font-bold;
   }
+  .premium-card-ai {
+    @apply bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl relative overflow-hidden;
+  }
+
+  .pill-btn {
+    @apply px-4 py-2 rounded-xl text-sm font-bold border transition-all;
+  }
+
+  .pill-btn-active {
+    @apply bg-accent border-accent text-white shadow-lg shadow-accent/20;
+  }
+
+  .pill-btn-inactive {
+    @apply bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700;
+  }
+
+  /* Markdown content styling for AI response */
+  .prose-ai {
+    @apply text-slate-300 text-sm leading-relaxed;
+  }
+  .prose-ai p {
+    @apply mb-4;
+  }
+  .prose-ai h1, .prose-ai h2, .prose-ai h3 {
+    @apply text-white font-black mt-6 mb-3;
+  }
+  .prose-ai h3 {
+    @apply text-lg text-accent;
+  }
+  .prose-ai ul {
+    @apply list-disc list-inside mb-4 space-y-1;
+  }
+  .prose-ai ol {
+    @apply list-decimal list-inside mb-4 space-y-2;
+  }
+  .prose-ai li {
+    @apply ml-2;
+  }
+  .prose-ai strong {
+    @apply text-white font-bold;
+  }
+  .prose-ai a {
+    @apply text-accent hover:underline;
+  }
+  .prose-ai hr {
+    @apply border-slate-800 my-6;
+  }
 }
 
 /* Custom Scrollbar */
