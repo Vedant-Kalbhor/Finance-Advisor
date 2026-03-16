@@ -15,5 +15,7 @@ fastapi-mail
 kiteconnect
 langchain
 langchain-community
-faiss-cpu
+langchain-google-genai
+langchain-exa
+langgraph
 python-pdf

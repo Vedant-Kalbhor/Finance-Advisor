@@ -43,5 +43,9 @@ export const investmentService = {
     syncZerodhaPortfolio: async () => {
         const response = await api.post('/zerodha/sync-portfolio');
         return response.data;
+    },
+    disconnectZerodha: async () => {
+        const response = await api.post('/zerodha/disconnect');
+        return response.data;
     }
 };

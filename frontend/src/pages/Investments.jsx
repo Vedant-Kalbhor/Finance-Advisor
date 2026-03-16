@@ -131,6 +131,19 @@ const Investments = () => {
         }
     };
 
+    const handleDisconnectZerodha = async () => {
+        if (!window.confirm('Are you sure you want to disconnect Zerodha? You will need to login again to sync your portfolio.')) return;
+        
+        try {
+            await investmentService.disconnectZerodha();
+            setBrokerConfig(prev => ({ ...prev, is_active: false }));
+            alert('Zerodha disconnected successfully');
+        } catch (err) {
+            console.error('Error disconnecting Zerodha:', err);
+            alert('Failed to disconnect Zerodha');
+        }
+    };
+
     const handleSyncPortfolio = async () => {
         setIsSyncing(true);
         try {
@@ -139,7 +152,20 @@ const Investments = () => {
             await fetchData(); // Refresh the investments list
         } catch (err) {
             console.error('Error syncing portfolio:', err);
-            alert('Failed to sync portfolio. Make sure your session is still active.');
+            const errorMessage = err.response?.data?.detail || 'Failed to sync portfolio. Make sure your session is still active.';
+            alert(errorMessage);
+            
+            // If it's a 401 (Unauthorized), we should trigger the broker disconnect logic and prompt for login
+            if (err.response?.status === 401) {
+                // Clear local state and backend token
+                try {
+                    await investmentService.disconnectZerodha();
+                } catch (discErr) {
+                    console.error('Auto-disconnect failed', discErr);
+                }
+                setBrokerConfig(prev => ({ ...prev, is_active: false }));
+                setShowBrokerModal(true);
+            }
         } finally {
             setIsSyncing(false);
         }
@@ -198,7 +224,7 @@ const Investments = () => {
 
                     {/* Global Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        <div className="premium-card p-8 bg-white flex flex-col justify-between h-44 border-l-8 border-accent">
+                        <div className="premium-card p-6 bg-white flex flex-col justify-between min-h-[13rem] border-l-8 border-accent">
                             <div className="flex justify-between items-start">
                                 <div className="p-3 rounded-2xl bg-accent/10 text-accent">
                                     <Wallet className="w-6 h-6" />
@@ -210,9 +236,9 @@ const Investments = () => {
                             </div>
                         </div>
 
-                        <div className="premium-card p-8 bg-slate-900 text-white flex flex-col justify-between h-44 relative overflow-hidden group">
+                        <div className="premium-card p-6 bg-slate-900 text-white flex flex-col justify-between min-h-[13rem] relative overflow-hidden group">
                             <div className="relative z-10">
-                                <div className="flex justify-between items-start mb-4">
+                                <div className="flex justify-between items-start mb-2">
                                     <div className="p-2 bg-white/10 rounded-xl">
                                         <ShieldCheck className="w-5 h-5 text-accent" />
                                     </div>
@@ -222,23 +248,31 @@ const Investments = () => {
                             </div>
                             
                             {brokerConfig?.is_active ? (
-                                <button
-                                    onClick={handleSyncPortfolio}
-                                    disabled={isSyncing}
-                                    className="relative z-10 flex items-center gap-2 text-xs font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-400 text-slate-900 w-fit px-4 py-2 rounded-lg transition-all mt-4 shadow-lg disabled:opacity-50"
-                                >
-                                    {isSyncing ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            Syncing...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Sparkles className="w-4 h-4" />
-                                            Sync Portfolio
-                                        </>
-                                    )}
-                                </button>
+                                <div className="relative z-10 flex gap-2 mt-4">
+                                    <button
+                                        onClick={handleSyncPortfolio}
+                                        disabled={isSyncing}
+                                        className="flex items-center gap-2 text-xs font-black uppercase tracking-widest bg-emerald-500 hover:bg-emerald-400 text-slate-900 w-fit px-4 py-2 rounded-lg transition-all shadow-lg disabled:opacity-50"
+                                    >
+                                        {isSyncing ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                                Syncing...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Sparkles className="w-4 h-4" />
+                                                Sync
+                                            </>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={handleDisconnectZerodha}
+                                        className="flex items-center gap-2 text-xs font-black uppercase tracking-widest bg-white/10 hover:bg-red-500/20 text-white w-fit px-4 py-2 rounded-lg transition-all border border-white/10"
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
                             ) : (
                                 <button
                                     onClick={() => setShowBrokerModal(true)}
@@ -252,7 +286,7 @@ const Investments = () => {
                             <div className="absolute top-0 right-0 w-32 h-32 bg-accent/20 rounded-full blur-3xl -mr-10 -mt-10" />
                         </div>
 
-                        <div className="premium-card p-8 bg-white flex flex-col justify-between h-44">
+                        <div className="premium-card p-6 bg-white flex flex-col justify-between min-h-[13rem]">
                             <div className="flex justify-between items-start">
                                 <div className="p-3 rounded-2xl bg-slate-100 text-slate-900">
                                     <TrendingUp className="w-6 h-6" />

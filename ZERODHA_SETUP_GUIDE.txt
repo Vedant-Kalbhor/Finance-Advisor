@@ -1,0 +1,54 @@
+=========================================================
+FINANCE ADVISOR - ZERODHA INTEGRATION SETUP GUIDE
+=========================================================
+
+This guide explains how to properly connect your Zerodha 
+Kite account to the Finance Advisor application.
+
+---------------------------------------------------------
+STEP 1: CREATE A KITE CONNECT APP
+---------------------------------------------------------
+1. Go to the Kite Connect Developer Console:
+   https://developers.kite.trade/
+2. Log in with your standard Zerodha account credentials.
+3. Click on the "Create New App" button.
+4. Fill in the required details (App Name, Description, etc.).
+5. CRITICAL: Use the URL http://localhost:5173/zerodha/callback as Redirect URL.
+   (This is required for the application to link your account successfully).
+6. Save the app. You may need to pay the monthly developer fee 
+   if you haven't already.
+
+---------------------------------------------------------
+STEP 2: ADD CREDENTIALS TO YOUR BACKEND
+---------------------------------------------------------
+1. On the Kite Connect Dashboard, you will now see an "API Key".
+2. Click on your created app to view the "API Secret".
+3. In your Finance Advisor project folder, open the file:
+   /backend/.env
+4. Add the following lines, replacing them with your actual keys:
+
+   ZERODHA_API_KEY=your_actual_api_key_here
+   ZERODHA_API_SECRET=your_actual_api_secret_here
+
+5. Save the file and restart your backend server.
+
+---------------------------------------------------------
+STEP 3: LINK IN THE APPLICATION
+---------------------------------------------------------
+1. Open your Finance Advisor frontend in the browser:
+   http://localhost:5173/
+2. Log in to your personal account.
+3. Navigate to the "Investments" tab on the sidebar.
+4. In the top "Zerodha Connected" panel, click the "Connect Zerodha" button.
+5. Click "Login with Zerodha". You will be safely redirected to Kite.
+6. Enter your Zerodha ID, Password, and TOTP.
+7. Upon success, you will be automatically bounced back to the Finance 
+   Advisor app, and your account will instantly be linked!
+
+---------------------------------------------------------
+STEP 4: SYNC YOUR PORTFOLIO
+---------------------------------------------------------
+1. Once linked, the "Connect Zerodha" button turns into a green 
+   "Sync Portfolio" button.
+2. Click it at any time to automatically pull your live stock holdings 
+   directly into your Finance Advisor portfolio dashboard!

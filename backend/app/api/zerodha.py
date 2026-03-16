@@ -5,6 +5,8 @@ from ..services.zerodha_service import ZerodhaService
 from ..api.auth import get_current_user
 from ..models.user import BrokerConfig, User, Investment
 import os
+import logging
+from kiteconnect import exceptions as kite_exceptions
 
 router = APIRouter()
 
@@ -13,7 +15,11 @@ def get_zerodha_service():
     api_secret = os.getenv("ZERODHA_API_SECRET")
     
     if not api_key or not api_secret:
-        raise HTTPException(status_code=500, detail="Zerodha API credentials not configured in environment")
+        logging.error("Zerodha API credentials missing in .env")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Zerodha API credentials not configured in environment. Please check your .env file."
+        )
     return ZerodhaService(api_key=api_key, api_secret=api_secret)
 
 def get_broker_config(db: Session, user_id: int):
@@ -33,7 +39,27 @@ def get_login_url(
         url = service.get_login_url()
         return {"login_url": url}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logging.exception("Failed to get login URL")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get login URL: {str(e)}"
+        )
+
+@router.post("/disconnect")
+def disconnect_zerodha(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Disconnects Zerodha and clears the access token."""
+    broker_config = get_broker_config(db, current_user.id)
+    if not broker_config:
+        raise HTTPException(status_code=404, detail="Zerodha configuration not found")
+    
+    broker_config.access_token = None
+    broker_config.is_active = False
+    db.commit()
+    
+    return {"message": "Zerodha disconnected successfully"}
 
 @router.post("/callback")
 def zerodha_callback(
@@ -80,8 +106,17 @@ def get_profile(
     try:
         kite = service._get_kite_instance(broker_config.access_token)
         return kite.profile()
+    except kite_exceptions.TokenException:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Zerodha session expired or invalid. Please re-authenticate."
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch profile: {str(e)}")
+        logging.exception("Failed to fetch profile")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch profile: {str(e)}"
+        )
 
 @router.get("/holdings")
 def get_holdings(
@@ -97,8 +132,17 @@ def get_holdings(
     try:
         holdings = service.get_holdings(broker_config.access_token)
         return {"holdings": holdings}
+    except kite_exceptions.TokenException:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Zerodha session expired or invalid. Please re-authenticate."
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch holdings: {str(e)}")
+        logging.exception("Failed to fetch holdings")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch holdings: {str(e)}"
+        )
 
 @router.post("/sync-portfolio")
 def sync_portfolio(
@@ -155,9 +199,19 @@ def sync_portfolio(
             "synced_investments": synced_count,
             "new_investments": new_count
         }
+    except kite_exceptions.TokenException:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Zerodha session expired or invalid. Please re-authenticate."
+        )
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to sync portfolio: {str(e)}")
+        logging.exception("Failed to sync portfolio")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to sync portfolio: {str(e)}"
+        )
 
 @router.get("/positions")
 def get_positions(
@@ -173,5 +227,14 @@ def get_positions(
     try:
         positions = service.get_positions(broker_config.access_token)
         return {"positions": positions}
+    except kite_exceptions.TokenException:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Zerodha session expired or invalid. Please re-authenticate."
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch positions: {str(e)}")
+        logging.exception("Failed to fetch positions")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch positions: {str(e)}"
+        )

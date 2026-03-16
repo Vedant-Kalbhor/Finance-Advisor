@@ -1,39 +1,120 @@
 """
 Chatbot AI Module
 ==================
-Uses Google Gemini to power a conversational financial advisor chatbot.
-The chatbot receives the user's full financial context (profile, investments,
-goals) and responds to finance-related queries in simplified language.
+Uses a LangChain ReAct agent powered by Google Gemini to run a
+conversational financial advisor chatbot.
 
-Google Search grounding is enabled so the chatbot can answer questions
-about current market conditions, stock prices, news, and trends.
-Sources are cited in the response.
+The agent receives the user's full financial context (profile, investments,
+goals) via a system prompt and has access to an Exa web search tool so it
+can autonomously look up real-time market data, news, prices, and financial
+information when it decides it needs to.
 
-Input: user message, conversation history, user financial context
-Output: AI-generated response string (with source citations appended)
+Architecture:
+  LangGraph create_react_agent  ->  ChatGoogleGenerativeAI (Gemini)
+                                 ->  ExaSearchResults (web search tool)
+
+Input:  user message, conversation history, user financial context
+Output: AI-generated response string (with source citations)
 """
 
 import os
-import json
-import google.generativeai as genai
 from dotenv import load_dotenv
+
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from langgraph.prebuilt import create_react_agent
+
+from .exa_search import get_exa_search_tool
 
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
 
-# Google Search tool — allows Gemini to search the web
-# for current market data, news, and real-time financial information.
-google_search_tool = genai.protos.Tool(
-    google_search=genai.protos.Tool.GoogleSearch()
-)
 
+# ---------------------------------------------------------------------------
+# LLM & tool initialization (done once at module load)
+# ---------------------------------------------------------------------------
+
+def _create_llm():
+    """Create and return the ChatGoogleGenerativeAI (Gemini) LLM instance."""
+    if not GEMINI_API_KEY:
+        return None
+    return ChatGoogleGenerativeAI(
+        model="gemini-2.5-flash",
+        google_api_key=GEMINI_API_KEY,
+        temperature=0.7,
+    )
+
+
+def _get_tools() -> list:
+    """Collect all available tools for the agent."""
+    tools = []
+    exa_tool = get_exa_search_tool()
+    if exa_tool:
+        tools.append(exa_tool)
+    return tools
+
+
+_llm = _create_llm()
+_tools = _get_tools()
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _extract_text(content) -> str:
+    """
+    Safely extract a plain-text string from an AIMessage's content field.
+
+    AIMessage.content can be:
+      - str              -> return as-is
+      - list[str]        -> join them
+      - list[dict]       -> extract "text" blocks, skip tool_use blocks
+    """
+    if isinstance(content, str):
+        return content.strip()
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict) and item.get("type") == "text":
+                parts.append(item.get("text", ""))
+        return "\n".join(parts).strip()
+    return str(content).strip()
+
+
+# Maximum number of reasoning steps the agent is allowed to take.
+# Each step = 1 LLM call + potentially 1 tool call.
+# This prevents runaway loops that burn through API credits.
+AGENT_RECURSION_LIMIT = 8
+
+
+def _convert_history(history: list) -> list:
+    """
+    Convert the app's chat history format to LangChain message objects.
+
+    App format:  [{"role": "user"|"assistant", "content": "..."}, ...]
+    LangChain:   [HumanMessage(...), AIMessage(...), ...]
+    """
+    messages = []
+    for msg in history:
+        content = msg.get("content", "")
+        if msg.get("role") == "user":
+            messages.append(HumanMessage(content=content))
+        else:
+            messages.append(AIMessage(content=content))
+    return messages
+
+
+# ---------------------------------------------------------------------------
+# System prompts
+# ---------------------------------------------------------------------------
 
 def _build_system_prompt(user_context: dict) -> str:
     """
-    Builds a system prompt that gives Gemini full context about the user's
+    Builds a system prompt that gives the agent full context about the user's
     financial situation so it can provide personalized advice.
     """
     profile = user_context.get("profile", {})
@@ -74,7 +155,7 @@ def _build_system_prompt(user_context: dict) -> str:
     total_invested = sum(inv.get("amount", 0) for inv in investments)
 
     system_prompt = f"""You are "Finance Advisor AI", a friendly, knowledgeable, and up-to-date personal finance advisor chatbot.
-You have access to the user's complete financial profile AND the ability to search the internet for current market data, news, and financial trends.
+You have access to the user's complete financial profile AND you have a web search tool to find real-time financial data.
 
 ═══════════════════════════════════════
 CORE BEHAVIOR RULES
@@ -94,28 +175,17 @@ CORE BEHAVIOR RULES
 
 7. **Formatting**: Use bullet points, numbered lists, and bold text to make responses scannable and clear.
 
+8. **Tool Usage**: Use the web search tool whenever you need up-to-date market information, news, current prices, or to verify facts you are unsure of. Add "India" or "Indian market" to your search queries for better relevance.
+
 ═══════════════════════════════════════
-WEB SEARCH & CURRENT MARKET DATA
+CITATION RULES
 ═══════════════════════════════════════
 
-You have access to Google Search. Use it proactively when the user asks about:
-- Current stock prices, index levels (Nifty, Sensex, S&P 500), or crypto prices
-- Recent market news, IPOs, or economic events
-- Current interest rates (RBI repo rate, FD rates, loan rates)
-- Latest government schemes, tax rule changes, or budget announcements
-- Fund/stock performance, ratings, or analyst opinions
-- Any question where real-time or recent data would improve your answer
-
-CITATION RULES:
-- When you use information from web search, ALWAYS cite your sources inline in your response.
+When you use information from web search results:
+- ALWAYS cite your sources inline in your response.
 - Format citations as: **[Source Name](URL)** — e.g., **[Moneycontrol](https://www.moneycontrol.com/...)**
-- Prefer reliable, authoritative financial sources:
-  * Official sources: RBI, SEBI, Income Tax Department, NSE/BSE
-  * Trusted financial portals: Moneycontrol, Economic Times, LiveMint, NDTV Profit, Value Research
-  * Global: Bloomberg, Reuters, Yahoo Finance, Investopedia
-- AVOID citing: random blogs, forums, social media posts, or unverified sources.
-- If the data is time-sensitive (e.g., stock prices), mention the date/time context so the user knows how current it is.
-- At the end of your response, if you cited multiple sources, add a brief "**Sources:**" section listing them.
+- Prefer reliable, authoritative financial sources (RBI, SEBI, Moneycontrol, Economic Times, Bloomberg, etc.).
+- If data is time-sensitive (stock prices), mention the date/time from the source.
 
 ═══════════════════════════════════════
 USER'S FINANCIAL PROFILE
@@ -147,66 +217,14 @@ FINANCIAL GOALS:
 
 ═══════════════════════════════════════
 
-Remember: You're their trusted financial friend. Be warm, practical, data-driven, and always back up market-related claims with real sources."""
+Remember: You're their trusted financial friend. Be proactive in using your search tool to give current and actionable advice."""
 
     return system_prompt
 
 
-def _extract_citations(response) -> list:
-    """
-    Extract source citations from Gemini's grounding metadata.
-    Returns a list of dicts with 'title' and 'url' keys.
-    """
-    citations = []
-    seen_urls = set()
-
-    try:
-        candidate = response.candidates[0]
-        grounding_meta = getattr(candidate, "grounding_metadata", None)
-        if not grounding_meta:
-            return citations
-
-        grounding_chunks = getattr(grounding_meta, "grounding_chunks", [])
-        for chunk in grounding_chunks:
-            web = getattr(chunk, "web", None)
-            if web:
-                url = getattr(web, "uri", "")
-                title = getattr(web, "title", "")
-                if url and url not in seen_urls:
-                    seen_urls.add(url)
-                    citations.append({
-                        "title": title.strip() if title else url,
-                        "url": url,
-                    })
-    except Exception as e:
-        print(f"[Chatbot] Citation extraction error: {e}")
-
-    return citations
-
-
-def _format_response_with_citations(text: str, citations: list) -> str:
-    """
-    Appends a formatted sources section to the response if there are
-    citations from web search that aren't already mentioned in the text.
-    """
-    if not citations:
-        return text
-
-    # Check which citations are not already in the response text
-    new_citations = []
-    for cite in citations:
-        if cite["url"] not in text:
-            new_citations.append(cite)
-
-    if not new_citations:
-        return text
-
-    sources_section = "\n\n---\n📌 **Sources:**\n"
-    for cite in new_citations:
-        sources_section += f"- [{cite['title']}]({cite['url']})\n"
-
-    return text + sources_section
-
+# ---------------------------------------------------------------------------
+# Public API — same signatures as before, so the API layer needs no changes
+# ---------------------------------------------------------------------------
 
 async def generate_chat_response(
     message: str,
@@ -214,17 +232,18 @@ async def generate_chat_response(
     user_context: dict,
 ) -> str:
     """
-    Generate a chatbot response using Gemini with Google Search grounding.
+    Generate a chatbot response using a LangChain ReAct agent
+    (Gemini LLM + Exa web search tool).
 
     Args:
-        message: The user's current message
-        history: List of previous messages [{"role": "user"|"assistant", "content": "..."}]
-        user_context: Dict with "profile", "investments", "goals" keys
+        message:      The user's current message.
+        history:      Conversation history as [{"role": "user"|"assistant", "content": "..."}].
+        user_context: Dict with keys "profile", "investments", "goals".
 
     Returns:
-        The AI-generated response string with source citations
+        AI-generated response string.
     """
-    if not GEMINI_API_KEY:
+    if not _llm:
         return (
             "I'm sorry, the AI service is not configured right now. "
             "Please contact support to enable the chatbot feature."
@@ -233,34 +252,37 @@ async def generate_chat_response(
     try:
         system_prompt = _build_system_prompt(user_context)
 
-        model = genai.GenerativeModel(
-            "gemini-2.5-flash",
-            system_instruction=system_prompt,
-            tools=[google_search_tool],
+        # Build the agent with the system prompt and tools
+        agent = create_react_agent(
+            model=_llm,
+            tools=_tools,
+            prompt=system_prompt,
         )
 
-        # Convert history to Gemini's format
-        gemini_history = []
-        for msg in history:
-            role = "user" if msg.get("role") == "user" else "model"
-            gemini_history.append({
-                "role": role,
-                "parts": [msg.get("content", "")],
-            })
+        # Build message list: history + current user message
+        messages = _convert_history(history)
+        messages.append(HumanMessage(content=message))
 
-        chat = model.start_chat(history=gemini_history)
-        response = chat.send_message(message)
+        # Invoke the agent (capped to prevent runaway tool-call loops)
+        result = await agent.ainvoke(
+            {"messages": messages},
+            config={"recursion_limit": AGENT_RECURSION_LIMIT},
+        )
 
-        response_text = response.text.strip()
+        # Extract the final AI response from the agent's message list
+        ai_messages = [
+            m for m in result["messages"]
+            if isinstance(m, AIMessage) and m.content
+        ]
+        if ai_messages:
+            return _extract_text(ai_messages[-1].content)
 
-        # Extract citations from grounding metadata and append if needed
-        citations = _extract_citations(response)
-        response_text = _format_response_with_citations(response_text, citations)
-
-        return response_text
+        return "I wasn't able to generate a response. Please try again."
 
     except Exception as e:
         print(f"[Chatbot] AI generation failed: {e}")
+        import traceback
+        traceback.print_exc()
         return (
             "I'm having a bit of trouble processing your request right now. "
             "Could you try rephrasing your question, or try again in a moment?"
@@ -273,19 +295,18 @@ async def generate_investment_recommendations(
     user_context: dict,
 ) -> str:
     """
-    Generate AI-powered investment recommendations using Gemini with
-    Google Search grounding.
+    Generate AI-powered investment recommendations using a LangChain ReAct agent
+    (Gemini LLM + Exa web search tool).
 
     Args:
-        risk_level: "Conservative", "Moderate", or "Aggressive"
-        investment_type: e.g. "Stock", "Mutual Fund", "Commodity", "Gold/Silver", etc.
-        user_context: Dict with "profile", "investments", "goals" keys
+        risk_level:      e.g. "Conservative", "Moderate", "Aggressive"
+        investment_type: e.g. "Mutual Fund", "Stock", "Gold"
+        user_context:    Dict with keys "profile", "investments", "goals".
 
     Returns:
-        Formatted markdown string with specific investment recommendations
-        and source citations.
+        AI-generated recommendations string.
     """
-    if not GEMINI_API_KEY:
+    if not _llm:
         return (
             "The AI service is not configured. "
             "Please contact support to enable recommendations."
@@ -296,7 +317,7 @@ async def generate_investment_recommendations(
         investments = user_context.get("investments", [])
         goals = user_context.get("goals", [])
 
-        # Build portfolio summary for context
+        # Build portfolio summary
         portfolio_lines = []
         for inv in investments:
             portfolio_lines.append(
@@ -320,9 +341,12 @@ async def generate_investment_recommendations(
                 )
             goals_summary = "\n".join(goal_lines)
 
-        system_prompt = f"""You are an expert investment advisor AI with access to real-time market data via Google Search.
+        system_prompt = f"""You are an expert investment advisor AI. You have access to a web search tool
+to gather real-time market data.
 
-Your task is to provide **5 specific, real investment recommendations** based on the user's preferences and financial profile.
+CRITICAL: Use the search tool to find specific, current funds, prices, and market trends.
+Do NOT make up fund names or prices. Only recommend options you find through search or know exist.
+Add "India" or "Indian market" to your search queries for better relevance.
 
 ═══════════════════════════════════════
 USER PREFERENCES
@@ -351,57 +375,58 @@ FINANCIAL GOALS:
 INSTRUCTIONS
 ═══════════════════════════════════════
 
-1. **Search the internet** for current, real {investment_type} options that match the "{risk_level}" risk level.
+1. **Search first**: Use the web search tool to find the latest data on {investment_type} options in India.
 
-2. Return exactly **5 specific recommendations**. For each, provide:
-   - **Name** of the specific {investment_type} (real name, not generic)
-   - **Current Price / NAV** (search for the latest available)
-   - **Why it fits** the user's profile and risk tolerance
-   - **Expected Returns** (based on historical performance)
-   - **Risk Assessment** specific to this option
+2. **Recommend 5 specific options** with current returns/performance data.
 
-3. **Consider the user's existing portfolio** to:
-   - Avoid recommending what they already own
-   - Suggest diversification where needed
-   - Align with their financial goals
+3. **Suggest specific amounts** to invest based on their ₹{monthly_savings:,.2f} monthly savings.
 
-4. **Indian Context**: Use ₹ for currency. Focus on Indian markets (NSE/BSE listed stocks, AMFI registered mutual funds, MCX commodities, etc.) unless the user's profile suggests otherwise.
+4. **Diversity**: Ensure the 5 options provide a balanced portfolio.
 
-5. **Format** your response clearly with:
-   - A brief portfolio analysis paragraph at the top
-   - Numbered list of 5 recommendations with details
-   - A summary/disclaimer at the bottom
+5. **Cite sources** as: **[Source Name](URL)** using the URLs from search.
 
-6. **Cite sources** for all market data using: **[Source Name](URL)**
-   Prefer: Moneycontrol, Economic Times, NSE India, Value Research, LiveMint, AMFI.
+6. **Be honest**: Include appropriate disclaimers about market risks. Use ₹ for all currency.
 
-7. **Be honest**: Include appropriate disclaimers about market risks. These are suggestions, not guaranteed returns.
+═══════════════════════════════════════
+USER'S CURRENT SITUATION
+═══════════════════════════════════════
+- Profile: {profile.get('risk_profile', 'Moderate')}
+- Monthly Savings: ₹{monthly_savings:,.2f}
+- Existing Investments: {portfolio_summary}
+- Goals: {goals_summary}
+"""
 
-Remember: These must be REAL, CURRENT investment options that actually exist in the market today."""
-
-        model = genai.GenerativeModel(
-            "gemini-2.5-flash",
-            system_instruction=system_prompt,
-            tools=[google_search_tool],
+        # Build the agent with investment-focused system prompt
+        agent = create_react_agent(
+            model=_llm,
+            tools=_tools,
+            prompt=system_prompt,
         )
 
         user_message = (
-            f"Based on my profile and current portfolio, recommend 5 specific "
-            f"{investment_type} options with a {risk_level.lower()} risk approach. "
-            f"Search for the latest market data and give me actionable suggestions."
+            f"Recommend 5 specific {investment_type} options for me with a {risk_level.lower()} risk approach. "
+            "Use your search tool to give me the latest data."
         )
 
-        response = model.generate_content(user_message)
-        response_text = response.text.strip()
+        result = await agent.ainvoke(
+            {"messages": [HumanMessage(content=user_message)]},
+            config={"recursion_limit": AGENT_RECURSION_LIMIT},
+        )
 
-        # Extract and append citations
-        citations = _extract_citations(response)
-        response_text = _format_response_with_citations(response_text, citations)
+        # Extract the final AI response
+        ai_messages = [
+            m for m in result["messages"]
+            if isinstance(m, AIMessage) and m.content
+        ]
+        if ai_messages:
+            return _extract_text(ai_messages[-1].content)
 
-        return response_text
+        return "I wasn't able to generate recommendations. Please try again."
 
     except Exception as e:
         print(f"[AI Recommendations] Generation failed: {e}")
+        import traceback
+        traceback.print_exc()
         return (
             "I'm having trouble generating recommendations right now. "
             "Please try again in a moment."
