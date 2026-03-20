@@ -10,8 +10,7 @@ import {
     Shield, LogOut, RefreshCw, MapPin, Download
 } from 'lucide-react';
 import Sidebar from '../components/Sidebar';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { reportService } from '../services/reportService';
 
 const Budget = () => {
     // ─── State Management ───────────────────────────────────
@@ -101,15 +100,14 @@ const Budget = () => {
     };
 
     const downloadPDF = async () => {
-        const element = budgetRef.current;
-        const canvas = await html2canvas(element, { scale: 2 });
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`Budget_Report_${new Date().toLocaleDateString()}.pdf`);
+        try {
+            setGenerating(true); // Re-use generating state as loader
+            await reportService.downloadReport('Budget');
+        } catch (err) {
+            alert('Failed to generate professional budget report.');
+        } finally {
+            setGenerating(false);
+        }
     };
 
     // ─── Loading State ──────────────────────────────────────

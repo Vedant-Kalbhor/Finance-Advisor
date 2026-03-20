@@ -12,8 +12,7 @@ import {
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import Sidebar from '../components/Sidebar';
 import IndicesWidget from '../components/IndicesWidget';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import { reportService } from '../services/reportService';
 
 const COLORS = ['#10B981', '#111827', '#6B7280', '#3B82F6', '#8B5CF6'];
 
@@ -61,15 +60,14 @@ const Dashboard = () => {
     };
 
     const downloadPDF = async () => {
-        const element = dashboardRef.current;
-        const canvas = await html2canvas(element, { scale: 2 });
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save('FinanceAdvisor_Summary.pdf');
+        try {
+            setLoading(true); // Show loader while AI generates report
+            await reportService.downloadReport('Overview');
+        } catch (err) {
+            alert('Failed to generate professional report.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (loading) return (

@@ -2,13 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { taxService } from '../services/advisoryService';
 import { authService } from '../services/authService';
 import Sidebar from '../components/Sidebar';
+import { reportService } from '../services/reportService';
 import {
     Calculator, Shield, TrendingUp, AlertCircle,
     ChevronRight, ArrowRight, Loader2, Info,
     CheckCircle2, Landmark, PieChart, Download
 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 const TaxPlanner = () => {
     const [data, setData] = useState(null);
@@ -46,15 +45,14 @@ const TaxPlanner = () => {
     };
 
     const downloadPDF = async () => {
-        const element = taxRef.current;
-        const canvas = await html2canvas(element, { scale: 2 });
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save('Tax_Optimizer_Report.pdf');
+        try {
+            setLoading(true);
+            await reportService.downloadReport('Tax');
+        } catch (err) {
+            alert('Failed to generate professional tax report.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (loading) return (
