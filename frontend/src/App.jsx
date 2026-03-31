@@ -9,6 +9,8 @@ import Goals from './pages/Goals';
 import TaxPlanner from './pages/TaxPlanner';
 import Chatbot from './pages/Chatbot';
 import ZerodhaCallback from './pages/ZerodhaCallback';
+import AnomalyDetection from './pages/AnomalyDetection';
+import MonteCarlo from './pages/MonteCarlo';
 
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = !!localStorage.getItem('token');
@@ -74,6 +76,22 @@ function App() {
           element={
             <PrivateRoute>
               <ZerodhaCallback />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/anomaly"
+          element={
+            <PrivateRoute>
+              <AnomalyDetection />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/monte-carlo"
+          element={
+            <PrivateRoute>
+              <MonteCarlo />
             </PrivateRoute>
           }
         />

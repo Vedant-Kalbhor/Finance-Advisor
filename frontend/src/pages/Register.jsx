@@ -59,8 +59,8 @@ const Register = () => {
                 <div className="w-full max-w-md mx-auto">
                     <div className="premium-card p-10 bg-white shadow-elevated">
                         <div className="mb-8 font-black text-2xl flex items-center gap-2">
-                            <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
-                                <Sparkles className="w-5 h-5 text-white" />
+                            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1.5 shadow-sm border border-slate-100">
+                                <img src="/finance-logo.svg" alt="Finance Advisor Logo" className="w-full h-full object-contain" />
                             </div>
                             Finance Advisor
                         </div>

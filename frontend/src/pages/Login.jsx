@@ -28,8 +28,8 @@ const Login = () => {
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
             <div className="w-full max-w-md">
                 <div className="text-center mb-10">
-                    <div className="inline-flex p-3 bg-accent/10 border border-accent/20 rounded-2xl mb-6 shadow-xl shadow-accent/10">
-                        <Wallet className="w-8 h-8 text-accent" />
+                    <div className="inline-flex p-3 bg-white border border-slate-100 rounded-2xl mb-6 shadow-xl shadow-slate-100/50 overflow-hidden w-16 h-16 items-center justify-center">
+                        <img src="/finance-logo.svg" alt="Finance Advisor Logo" className="w-full h-full object-contain" />
                     </div>
                     <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">Finance Advisor</h1>
                     <p className="text-slate-500 font-medium">Your personal wealth intelligence</p>

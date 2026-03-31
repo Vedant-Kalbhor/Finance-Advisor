@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/authService';
 import {
     LayoutDashboard, PieChart, Target, Briefcase,
-    Settings, Shield, LogOut, MessageCircle
+    Settings, Shield, LogOut, MessageCircle, AlertTriangle, BarChart3
 } from 'lucide-react';
 
 const Sidebar = ({ savingsRate }) => {
@@ -16,14 +16,16 @@ const Sidebar = ({ savingsRate }) => {
         { icon: Briefcase, label: 'Investments', path: '/investments' },
         { icon: Target, label: 'Strategy', path: '/goals' },
         { icon: Shield, label: 'Tax Optimizer', path: '/tax' },
+        { icon: AlertTriangle, label: 'Anomaly Radar', path: '/anomaly' },
+        { icon: BarChart3, label: 'Monte Carlo', path: '/monte-carlo' },
         { icon: MessageCircle, label: 'Chat Advisor', path: '/chatbot' },
     ];
 
     return (
         <aside className="w-72 bg-white border-r border-slate-200 hidden lg:flex flex-col p-8 fixed h-full z-10">
             <div className="flex items-center gap-3 mb-12">
-                <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-lg shadow-accent/20">
-                    <Shield className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 bg-white rounded-xl shadow-lg border border-slate-100 p-2 flex items-center justify-center">
+                    <img src="/finance-logo.svg" alt="Finance Advisor Logo" className="w-full h-full object-contain" />
                 </div>
                 <span className="font-black text-2xl tracking-tighter text-slate-900">Finance <span className="text-accent">Advisor</span></span>
             </div>
