@@ -11,7 +11,7 @@ else:
     try:
         genai.configure(api_key=api_key)
         # Try a few common models
-        for model_name in ["gemini-1.5-flash", "gemini-2.0-flash"]:
+        for model_name in ["gemini-2.5-flash", "gemini-2.0-flash"]:
             try:
                 print(f"Testing {model_name}...")
                 model = genai.GenerativeModel(model_name)

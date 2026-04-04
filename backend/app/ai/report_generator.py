@@ -99,7 +99,7 @@ async def generate_comprehensive_financial_report(user_context: dict, report_typ
         print("[ReportGen] No GEMINI_API_KEY found. Generating data-based report.")
         return _generate_data_based_report(user_context, report_type)
 
-    for model_name in ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]:
+    for model_name in ["gemini-2.5-flash", "gemini-2.5-pro"]:
         try:
             genai.configure(api_key=GEMINI_API_KEY)
             model = genai.GenerativeModel(model_name)
