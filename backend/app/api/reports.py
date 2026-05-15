@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 from io import BytesIO
 from fpdf import FPDF
 from datetime import datetime
+import unicodedata
 
 from ..db.session import get_db
 from ..models.user import User, Profile, Goal, Investment
@@ -30,6 +31,30 @@ class FinancialReportPDF(FPDF):
         self.set_font('Helvetica', 'I', 8)
         self.set_text_color(156, 163, 175) # Gray-400
         self.cell(0, 10, f'Page {self.page_no()} | Financial Document', 0, 0, 'C')
+
+def sanitize_text(text: str) -> str:
+    """
+    Replaces Unicode characters unsupported by fpdf's Helvetica (latin-1)
+    with safe ASCII equivalents, so PDF generation never crashes on AI output.
+    """
+    replacements = {
+        "\u2014": "-",   # em dash —
+        "\u2013": "-",   # en dash –
+        "\u2018": "'",   # left single quotation mark '
+        "\u2019": "'",   # right single quotation mark '
+        "\u201c": '"',   # left double quotation mark "
+        "\u201d": '"',   # right double quotation mark "
+        "\u2022": "*",   # bullet •
+        "\u2026": "...", # ellipsis …
+        "\u00b7": "*",   # middle dot ·
+        "\u2032": "'",   # prime ′
+        "\u2033": '"',   # double prime ″
+    }
+    for char, replacement in replacements.items():
+        text = text.replace(char, replacement)
+    # Strip any remaining non-latin-1 characters as a safety net
+    return text.encode("latin-1", errors="replace").decode("latin-1")
+
 
 def create_pdf_report(user_name, report_text, user_data):
     """
@@ -72,16 +97,16 @@ def create_pdf_report(user_name, report_text, user_data):
         if any(hdr in section.upper() for hdr in ['EXECUTIVE SUMMARY', 'ANALYSIS', 'RECOMMENDATIONS', 'STRATEGIC']):
             pdf.set_font('Helvetica', 'B', 14)
             pdf.set_text_color(17, 24, 39) # Dark Navy
-            pdf.cell(0, 10, section.split('\n')[0].strip(), 0, 1, 'L')
+            pdf.cell(0, 10, sanitize_text(section.split('\n')[0].strip()), 0, 1, 'L')
             pdf.ln(2)
             pdf.set_font('Helvetica', '', 10)
             pdf.set_text_color(55, 65, 81) # Gray-700
             content = '\n'.join(section.split('\n')[1:])
-            pdf.multi_cell(0, 6, content.strip())
+            pdf.multi_cell(0, 6, sanitize_text(content.strip()))
         else:
             pdf.set_font('Helvetica', '', 10)
             pdf.set_text_color(55, 65, 81)
-            pdf.multi_cell(0, 6, section.strip())
+            pdf.multi_cell(0, 6, sanitize_text(section.strip()))
         pdf.ln(5)
         
     return pdf.output()

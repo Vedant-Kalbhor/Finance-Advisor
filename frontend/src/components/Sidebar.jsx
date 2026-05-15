@@ -16,7 +16,7 @@ const Sidebar = ({ savingsRate }) => {
         { icon: Briefcase, label: 'Investments', path: '/investments' },
         { icon: Target, label: 'Strategy', path: '/goals' },
         { icon: Shield, label: 'Tax Optimizer', path: '/tax' },
-        { icon: AlertTriangle, label: 'Anomaly Radar', path: '/anomaly' },
+        // { icon: AlertTriangle, label: 'Anomaly Radar', path: '/anomaly' },
         { icon: BarChart3, label: 'Monte Carlo', path: '/monte-carlo' },
         { icon: MessageCircle, label: 'Chat Advisor', path: '/chatbot' },
     ];

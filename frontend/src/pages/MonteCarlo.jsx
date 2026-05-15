@@ -193,10 +193,10 @@ const MonteCarlo = () => {
                                     {/* Probability Cone Chart */}
                                     <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm">
                                         <h3 className="text-xl font-black text-slate-900 mb-2">Probability Cone</h3>
-                                        <p className="text-sm text-slate-500 mb-6 font-medium">
+                                        {/* <p className="text-sm text-slate-500 mb-6 font-medium">
                                             Each band shows the range of portfolio values across 1,000 simulated market scenarios.
                                             The wider the cone, the higher the market uncertainty.
-                                        </p>
+                                        </p> */}
 
                                         <div className="h-80">
                                             <ResponsiveContainer width="100%" height="100%">

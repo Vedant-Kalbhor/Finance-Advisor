@@ -78,13 +78,29 @@ Keep it within 600 words. Use plain text, not markdown.
 async def generate_comprehensive_financial_report(user_context: dict, report_type: str = "Overview") -> str:
     prompt = _build_prompt(user_context, report_type)
 
-    # 1. Try Ollama (local Llama2)
+    # 1. Try Gemini (primary) -- multiple models in case one is quota-exhausted
+    if GEMINI_API_KEY:
+        for model_name in ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]:
+            try:
+                genai.configure(api_key=GEMINI_API_KEY)
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(prompt)
+                text = response.text.strip()
+                if text:
+                    print(f"[ReportGen] Success via Gemini model: {model_name}")
+                    return text
+            except Exception as e:
+                print(f"[ReportGen] Gemini {model_name} failed: {e}")
+    else:
+        print("[ReportGen] No GEMINI_API_KEY found, skipping Gemini.")
+
+    # 2. Fallback to Ollama (local llama2)
     for url in OLLAMA_URLS:
         try:
             response = requests.post(
                 url,
                 json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": False},
-                timeout=45,
+                timeout=120,
             )
             if response.status_code == 200:
                 text = response.json().get("response", "").strip()
@@ -94,24 +110,8 @@ async def generate_comprehensive_financial_report(user_context: dict, report_typ
         except Exception as e:
             print(f"[ReportGen] Ollama at {url} failed: {e}")
 
-    # 2. Fallback to Gemini
-    if not GEMINI_API_KEY:
-        print("[ReportGen] No GEMINI_API_KEY found. Generating data-based report.")
-        return _generate_data_based_report(user_context, report_type)
-
-    for model_name in ["gemini-2.5-flash", "gemini-2.5-pro"]:
-        try:
-            genai.configure(api_key=GEMINI_API_KEY)
-            model = genai.GenerativeModel(model_name)
-            response = model.generate_content(prompt)
-            text = response.text.strip()
-            if text:
-                print(f"[ReportGen] Success via Gemini model: {model_name}")
-                return text
-        except Exception as e:
-            print(f"[ReportGen] Gemini {model_name} failed: {e}")
-
-    # 3. Final Fallback: data-based template
+    # 3. Final Fallback: data-based template (always works, no LLM needed)
+    print("[ReportGen] All LLMs failed. Using data-based report template.")
     return _generate_data_based_report(user_context, report_type)
 
 
